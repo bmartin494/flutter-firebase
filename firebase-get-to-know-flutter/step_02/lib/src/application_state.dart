@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:gtk_flutter/main.dart';
 import 'package:gtk_flutter/src/authentication.dart';
 
 
@@ -16,6 +19,23 @@ class ApplicationState extends ChangeNotifier {
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
         _loginState = ApplicationLoginState.loggedIn;
+        _guestBookSubscription = FirebaseFirestore.instance
+            .collection('guestbook')
+            .orderBy('timestamp', descending: true)
+            .snapshots()
+            .listen((snapshot) {
+          _guestBookMessages = [];
+          for (var document in snapshot.docs) {
+            print("Look a doc ${document.data()}");
+            _guestBookMessages.add(
+              GuestBookMessage(
+                name: document.data()['name'],
+                message: document.data()['text'],
+              ),
+            );
+          }
+          notifyListeners();
+        });
       } else {
         _loginState = ApplicationLoginState.loggedOut;
       }
@@ -28,6 +48,10 @@ class ApplicationState extends ChangeNotifier {
 
   String? _email;
   String? get email => _email;
+
+  StreamSubscription<QuerySnapshot>? _guestBookSubscription;
+  List<GuestBookMessage> _guestBookMessages = [];
+  List<GuestBookMessage> get guestBookMessages => _guestBookMessages;
 
   void startLoginFlow() {
     _loginState = ApplicationLoginState.emailAddress;
