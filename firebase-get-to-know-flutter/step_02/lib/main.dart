@@ -79,7 +79,17 @@ class HomePage extends StatelessWidget {
             builder: (context, appState, _) => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (appState.attendees >= 2)
+                  Paragraph('${appState.attendees} people going')
+                else if (appState.attendees == 1)
+                  const Paragraph('1 person going')
+                else
+                  const Paragraph('No one going'),
                 if (appState.loginState == ApplicationLoginState.loggedIn) ...[
+                  YesNoSelection(
+                    state: appState.attending,
+                    onSelection: (attending) => appState.attending = attending,
+                  ),
                   const Header('Discussion'),
                   GuestBook(
                       addMessage: (message) => appState.addMessageToGuestBook(message),
@@ -99,7 +109,7 @@ class HomePage extends StatelessWidget {
 class GuestBookMessage {
   GuestBookMessage({required this.name, required this.message});
   final String name;
-  final String message;
+  dynamic message;
 }
 
 class GuestBook extends StatefulWidget {
@@ -166,5 +176,70 @@ class _GuestBookState extends State<GuestBook> {
         SizedBox(height: 8),
       ],
     );
+  }
+}
+
+class YesNoSelection extends StatelessWidget {
+  const YesNoSelection({required this.state, required this.onSelection});
+  final Attending state;
+  final void Function(Attending selection) onSelection;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (state) {
+      case Attending.yes:
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(elevation: 0),
+                onPressed: () => onSelection(Attending.yes),
+                child: const Text('YES'),
+              ),
+              SizedBox(width: 8),
+              TextButton(
+                onPressed: () => onSelection(Attending.no),
+                child: const Text('NO'),
+              ),
+            ],
+          ),
+        );
+      case Attending.no:
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              TextButton(
+                onPressed: () => onSelection(Attending.yes),
+                child: const Text('YES'),
+              ),
+              SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(elevation: 0),
+                onPressed: () => onSelection(Attending.no),
+                child: const Text('NO'),
+              ),
+            ],
+          ),
+        );
+      default:
+        return Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              StyledButton(
+                onPressed: () => onSelection(Attending.yes),
+                child: Text('YES'),
+              ),
+              SizedBox(width: 8),
+              StyledButton(
+                onPressed: () => onSelection(Attending.no),
+                child: Text('NO'),
+              ),
+            ],
+          ),
+        );
+    }
   }
 }
